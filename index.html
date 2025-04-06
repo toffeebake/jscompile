@@ -1,0 +1,507 @@
+<!doctype html>
+
+<head>
+    <meta charset="utf-8" />
+    <!-- no robots crawling -->
+    <meta name="robots" content="noindex">
+
+    <!-- required JS scripts -->
+    <script src="pdf-lib.js"></script>
+    <script src="jszip.js"></script>
+
+    <title>jscompile</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        @media only screen and (min-width: 960px) {
+            body {
+                max-width: 50%;
+            }
+        }
+
+        body {
+            margin: 1em;
+            font-family: sans-serif;
+        }
+
+        #dragdrop {
+            margin-top: 1em;
+            margin-bottom: 1em;
+            padding: 3em;
+            border: dashed;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .changeBgOnDrag {
+            background-color: black;
+            color: white;
+        }
+
+        details {
+            margin: 1em auto 1em auto;
+            border-top: 1px solid gray;
+            padding-top: 1em;
+        }
+
+        button {
+            margin: 0.5em auto 0.5em auto;
+            background: none;
+            padding: 0;
+            border: 0;
+            text-decoration: underline;
+            cursor: pointer;
+            color: rgb(0, 0, 238);
+        }
+
+        button:disabled {
+            color: rgb(0, 0, 0, 0.5);
+            text-decoration: none;
+            cursor: default;
+        }
+
+        #upload {
+            width: 100%;
+            padding: 3em auto 3em auto;
+        }
+
+        #download {
+            padding-top: 1em;
+        }
+
+        #settings {
+            padding-top: 1em;
+        }
+
+        #settings div {
+            display: block;
+            /* margin-bottom: 1em; */
+        }
+
+        .grpsettings {
+            padding: 1em;
+            border: dotted;
+            margin-top: 1em;
+        }
+
+        .filetable {
+            text-align: center;
+        }
+
+        .filetable thead {
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>compile</h1>
+    <p>compile pdfs in browser</p>
+    <div id="dragdrop">
+        Drag and drop files here
+    </div>
+    <div id="upload">
+        <input type="file" id="input" multiple accept=".pdf,.jpg,.png" />
+        <pre id="filesoutput"></pre>
+    </div>
+    <div id="settings">
+        <button id="gen" disabled>compile</button>
+        <div class="grpsettings">
+            <div>
+                <label for="paginate">Paginate? </label>
+                <input type="checkbox" id="paginate" name="paginate" checked />
+            </div>
+            <div>
+                <label for="pageno">Starting page no: </label>
+                <input type="number" id="pageno" value="1" />
+                <!-- <p id="maxpages"></p> -->
+            </div>
+            <div>
+                <label for="pageprefix">Prefix: </label>
+                <input type="text" id="pageprefix" name="pageprefix" value="" />
+            </div>
+            <div>
+                <label for="skipfirst">Skip these pg no(s) (delimit using comma)</label>
+                <input type="text" id="skipfirst" name="skipfirst" value="1" />
+            </div>
+            <div>
+                <label for="pagefontsize">Font size </label>
+                <input type="number" id="pagefontsize" name="pagefontsize" value="20" min="0" />
+            </div>
+            <div>
+                <label for="pagemargin">Margin from top </label>
+                <input type="number" id="pagemargin" name="pagemargin" value="30" />
+            </div>
+            <div>
+                <label for="marginright">Margin from right </label>
+                <input type="number" id="marginright" name="marginright" value="40" />
+            </div>
+            <div>
+                <legend>Position</legend>
+                <input type="radio" id="topcenter" name="pageposition" value="topcenter" checked />
+                <label for="topcenter">Top-center</label>
+
+                <input type="radio" id="topright" name="pageposition" value="topright" />
+                <label for="topright">Top-right</label>
+            </div>
+            <!-- center, center right -->
+        </div>
+
+        <div class="grpsettings">
+            <div>
+                <label for="createtabs">Create tabs? </label>
+                <input type="checkbox" id="createtabs" name="createtabs" checked />
+            </div>
+            <div>
+                <label for="tabprefix">Tab prefix: </label>
+                <input type="text" id="tabprefix" name="tabprefix" value="TAB-" />
+            </div>
+            <div>
+                <label for="tabcount">Starting tab count </label>
+                <input type="number" id="tabcount" value="1" />
+            </div>
+            <div>
+                <label for="skiptabs">Skip tabs for first X file(s) </label>
+                <input type="number" id="skiptabs" value="1" />
+            </div>
+            <div>
+                <label for="tabfontsize">Font size </label>
+                <input type="number" id="tabfontsize" name="tabfontsize" value="50" min="0" />
+            </div>
+            <!-- page size -->
+        </div>
+    </div>
+    <div id="preview">
+
+    </div>
+</body>
+
+<script>
+    const preview = document.getElementById("preview")
+    var files = []
+    const filesoutput = document.querySelector("#filesoutput");
+    const filetypes = ["application/pdf", "image/jpeg", "image/png"]
+
+    // ATTACH EVENT LISTENERS & HANDLERS
+    // input - add handler handleUpload
+    const inputElement = document.getElementById("input");
+    inputElement.addEventListener("change", handleUpload, false);
+
+    // input handler - handleUpload
+    function handleUpload(event) {
+        const fileList = this.files; /* now you can work with the file list */
+        addFiles(fileList);
+    }
+
+    // dragdrop - add handlers for dragover and dragleave 
+    // change background on drop
+    const dragdrop = document.getElementById("dragdrop")
+    dragdrop.addEventListener("dragover", handleDragover, false)
+    dragdrop.addEventListener("dragleave", handleDragleave, false)
+
+    // dragdrop handlers - Dragover, Dragleave
+    function handleDragover(event) {
+        event.preventDefault();
+        this.classList.add('changeBgOnDrag');
+    }
+
+    function handleDragleave(event) {
+        event.preventDefault();
+        this.classList.remove('changeBgOnDrag');
+    }
+
+    // dragdrop - add handler upon drop
+    dragdrop.addEventListener("drop", handleDrop, false);
+
+    // dragdrop handler - Drop
+    function handleDrop(event) {
+        event.preventDefault();
+        this.classList.remove('changeBgOnDrag');
+        const fileList = event.dataTransfer.files;
+        addFiles(fileList);
+    }
+
+    // function - add files
+    function addFiles(fileList) {
+        for (const file of fileList) {
+            if (!filetypes.includes(file.type)) {
+                console.log("file not pdf, jpg, or png");
+                continue;
+            }
+            files.push(file);
+            filesoutput.innerText += `${file.name}\n`;
+        };
+
+        if (files.length > 0) {
+            gen.removeAttribute('disabled');
+        }
+    }
+
+    // compile button - add handler compile
+    const gen = document.getElementById('gen')
+    gen.addEventListener("click", compile, false)
+
+    // compile handler
+    async function compile() {
+
+        // create details-summary
+        const div = document.createElement("details");
+        let d = new Date();
+        div.id = parseInt(d.getTime() / 1000)
+        div.setAttribute('open', '')
+        preview.prepend(div)
+
+        const p = document.createElement("summary")
+        p.innerText = d.toString();
+        div.appendChild(p)
+        const ul = document.createElement("ul")
+        div.appendChild(ul)
+
+        const li = document.createElement("li")
+        li.classList.add("obj")
+        ul.appendChild(li)
+
+        const table = document.createElement("table");
+        table.classList.add("filetable")
+        div.appendChild(table);
+        const thead = table.createTHead();
+        const headrow = thead.insertRow();
+        var cell = headrow.insertCell();
+        cell.textContent = "filename";
+        cell.scope = "col";
+        var cell = headrow.insertCell();
+        cell.textContent = "start pg";
+        cell.scope = "col";
+        var cell = headrow.insertCell();
+        cell.textContent = "end pg";
+        cell.scope = "col";
+        const tbody = table.createTBody();
+
+        // get settings
+        const paginate = document.getElementById("paginate").checked;
+        var pageno = parseInt(document.getElementById("pageno").value);
+        const skipfirsttext = document.getElementById("skipfirst").value;
+        const skipArray = skipfirsttext.split(",").map(Number).filter(n => !isNaN(n));
+        const pagefontsize = parseInt(document.getElementById("pagefontsize").value);
+        const pagemargin = parseInt(document.getElementById("pagemargin").value);
+        const pageprefix = document.getElementById("pageprefix").value;
+        const marginright = parseInt(document.getElementById("marginright").value);
+        const pageposition = document.querySelector("input[name='pageposition']:checked").value;
+
+        const createtabs = document.getElementById("createtabs").checked;
+        const tabprefix = document.getElementById("tabprefix").value;
+        const skiptabs = parseInt(document.getElementById("skiptabs").value);
+        const tabfontsize = parseInt(document.getElementById("tabfontsize").value);
+        var tabcount = parseInt(document.getElementById("tabcount").value);
+
+        // create pdf file containing output
+        const PDFDocument = PDFLib.PDFDocument;
+        const pagesizes = PDFLib.PageSizes;
+        const pdfdoc = await PDFDocument.create();
+        const font = await pdfdoc.embedFont(PDFLib.StandardFonts.Helvetica);
+
+        // loop over filelist
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+
+            if (!filetypes.includes(file.type)) { continue }
+
+            // need to correct for page rotation
+
+            // insert into table
+            var row = tbody.insertRow();
+            var cell = row.insertCell();
+            cell.textContent = file.name;
+            var cell = row.insertCell();
+            if (paginate) {
+                cell.textContent = pageno;
+            }
+
+            // create tab
+            if (createtabs) {
+                if (i >= skiptabs) {
+                    var newpage = pdfdoc.addPage(PDFLib.PageSizes.A4);
+
+                    let text = `${tabprefix}${tabcount}`;
+                    let textwidth = font.widthOfTextAtSize(text, tabfontsize);
+                    let textheight = font.heightAtSize(tabfontsize);
+                    let calcwidth = (newpage.getWidth() - textwidth) / 2;
+                    let calcheight = (newpage.getHeight() - textheight) / 2;
+
+                    newpage.drawText(text, { x: calcwidth, y: calcheight, size: tabfontsize, font: font })
+
+                    // paginate
+                    if (paginate) {
+                        if (!skipArray.includes(pageno)) {
+                            let text = `${pageprefix}${pageno}`
+                            let textwidth = font.widthOfTextAtSize(text, pagefontsize);
+                            let pagewidth = newpage.getWidth();
+                            let pageheight = newpage.getHeight();
+                            let calc = (pagewidth - textwidth) / 2;
+                            if (pageposition === "topright") {
+                                calc = pagewidth - marginright;
+                            }
+                            newpage.drawText(text, { x: calc, y: pageheight - pagemargin, size: pagefontsize, font: font })
+                        }
+                    }
+                    pageno++;
+                    tabcount++;
+                }
+            }
+
+            // get bytes and load current file
+            let pdfbytes = await file.bytes();
+
+            // if pdf
+            if (file.type === "application/pdf") {
+                let pdfsrc = await PDFDocument.load(pdfbytes);
+                let pagecount = pdfsrc.getPageCount();
+
+                for (var j = 0; j < pagecount; j++) {
+                    let [ogpage] = await pdfdoc.copyPages(pdfsrc, [j])
+
+                    // copy page
+                    var newpage = pdfdoc.addPage(ogpage);
+
+                    // paginate
+                    if (paginate) {
+                        if (!skipArray.includes(pageno)) {
+                            let text = `${pageprefix}${pageno}`
+                            let textwidth = font.widthOfTextAtSize(text, pagefontsize);
+                            let pagewidth = newpage.getWidth();
+                            let pageheight = newpage.getHeight();
+                            let calc = (pagewidth - textwidth) / 2;
+                            if (pageposition === "topright") {
+                                calc = pagewidth - marginright;
+                            }
+                            newpage.drawText(text, { x: calc, y: pageheight - pagemargin, size: pagefontsize, font: font })
+                        }
+                    }
+                    pageno++;
+                }
+            } else {
+                var image;
+                if (file.type === "image/jpeg") {
+                    image = await pdfdoc.embedJpg(pdfbytes)
+                }
+                else if (file.type === "image/png") {
+                    image = await pdfdoc.embedPng(pdfbytes)
+                }
+                var newpage = pdfdoc.addPage(PDFLib.PageSizes.A4);
+                let pagewidth = newpage.getWidth();
+                let pageheight = newpage.getHeight();
+                var scaled = image.scaleToFit(pagewidth, pageheight);
+                newpage.drawImage(image, {x:(pagewidth-scaled.width)/2, y:(pageheight-scaled.height)/2, width:scaled.width, height:scaled.height});
+                // paginate
+                if (paginate) {
+                    if (!skipArray.includes(pageno)) {
+                        let text = `${pageprefix}${pageno}`
+                        let textwidth = font.widthOfTextAtSize(text, pagefontsize);
+                        let calc = (pagewidth - textwidth) / 2;
+                        if (pageposition === "topright") {
+                            calc = pagewidth - marginright;
+                        }
+                        newpage.drawText(text, { x: calc, y: pageheight - pagemargin, size: pagefontsize, font: font })
+                    }
+                }
+                pageno++;
+            }
+
+            var cell = row.insertCell();
+            if (paginate) {
+                cell.textContent = pageno - 1;
+            }
+        }
+
+        const outpdfBytes = await pdfdoc.save()
+        const outBlob = new Blob([outpdfBytes], { type: 'application/pdf' })
+        outBlob.name = `compile-${div.id}.pdf`;
+        const newLink = URL.createObjectURL(outBlob);
+        li.innerHTML = `<a href="${newLink}" download="${outBlob.name}" target="_blank" class="pdfdl">${outBlob.name}</a> (${formatBytes(outBlob.size)})`
+
+        files = [];
+        gen.setAttribute('disabled', "");
+        filesoutput.innerText = "";
+        // need to clear list
+    };
+
+    function formatBytes(bytes, decimals) {
+        if (bytes == 0) return '0 Bytes';
+        var k = 1024,
+            dm = decimals || 2,
+            sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
+            i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    }
+
+    async function handlePdf(pdfFile, pageno, blobs) {
+        const PDFDocument = PDFLib.PDFDocument;
+
+        // get binary of pdf
+        const pdfFileBytes = await pdfFile.arrayBuffer()
+
+        // get PDFDocument object
+        const pdfSrc = await PDFDocument.load(pdfFileBytes)
+
+        // check pages
+        // const pageCount = pdfSrc.getPageCount()
+        // if (pageCount % 2 == 1){
+        //     console.log('added blank')
+        //     const { width, height } = pdfSrc.getPage(1).getSize()
+        //     pdfSrc.addPage([width, height])
+        // }
+
+        // twoup
+        const pdfDoc = await PDFDocument.create();
+
+        const newPageCount = pdfSrc.getPageCount()
+        for (let j = 0; j < newPageCount; j = j + 2) {
+            console.log(j)
+            const [page1] = await pdfDoc.copyPages(pdfSrc, [j])
+            if (j == newPageCount - 1) {
+                let newPage1 = pdfDoc.addPage(page1)
+                newPage1.setSize(page1.getWidth() * 2, page1.getHeight())
+                continue
+            }
+            const [page2] = await pdfDoc.copyPages(pdfSrc, [j + 1])
+            // const page2 = pdfDoc.copyPages(pdfSrc,[k])
+            // const [page1, page2] = pdfDoc.copyPages(pdfSrc, [j, k])
+            // console.log(page2.node.Contents())
+            // page2.drawLine({
+            //     start: {x:0, y:0},
+            //     end: {x:0, y:0},
+            //     thickness: 0,
+            //     opacity: 0,
+            // })
+
+
+            let newPage1 = pdfDoc.addPage(page1)
+            // check if page2 is empty before embedding
+            if (page2.node.Contents()) {
+                const embedPage = await pdfDoc.embedPage(page2)
+                newPage1.drawPage(embedPage, { x: newPage1.getWidth() })
+                newPage1.setSize(page1.getWidth() + page2.getWidth(), page1.getHeight())
+            }
+            else {
+                newPage1.setSize(page1.getWidth() * 2, page1.getHeight());
+            }
+        }
+
+        // save
+        // const pdfDataUri = await pdfDoc.saveAsBase64({ dataUri: true });
+        // iframe.src = pdfDataUri
+        const pdfBytes = await pdfDoc.save()
+        const outBlob = new Blob([pdfBytes], { type: 'application/pdf' })
+        // set outBlob name
+        let filename = pdfFile.name
+        let newname = filename.replace('.pdf', '-2up.pdf')
+        outBlob.name = newname
+
+        const newLink = URL.createObjectURL(outBlob);
+        li.innerHTML = `<a href="${newLink}" download="${newname}" target="_blank" class="pdfdl">${newname}</a> (${outBlob.size}B)`
+    }
+</script>
+
+</html>
