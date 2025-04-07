@@ -7,7 +7,6 @@
 
     <!-- required JS scripts -->
     <script src="pdf-lib.js"></script>
-    <script src="jszip.js"></script>
 
     <title>jscompile</title>
 
@@ -341,7 +340,7 @@
                             let pageheight = newpage.getHeight();
                             let calc = (pagewidth - textwidth) / 2;
                             if (pageposition === "topright") {
-                                calc = pagewidth - marginright;
+                                calc = pagewidth - marginright - textwidth;
                             }
                             newpage.drawText(text, { x: calc, y: pageheight - pagemargin, size: pagefontsize, font: font })
                         }
@@ -352,7 +351,8 @@
             }
 
             // get bytes and load current file
-            let pdfbytes = await file.bytes();
+            let arrayBuffer = await file.arrayBuffer();
+            let pdfbytes = new Uint8Array(arrayBuffer);
 
             // if pdf
             if (file.type === "application/pdf") {
@@ -374,7 +374,7 @@
                             let pageheight = newpage.getHeight();
                             let calc = (pagewidth - textwidth) / 2;
                             if (pageposition === "topright") {
-                                calc = pagewidth - marginright;
+                                calc = pagewidth - marginright - textwidth;
                             }
                             newpage.drawText(text, { x: calc, y: pageheight - pagemargin, size: pagefontsize, font: font })
                         }
@@ -401,7 +401,7 @@
                         let textwidth = font.widthOfTextAtSize(text, pagefontsize);
                         let calc = (pagewidth - textwidth) / 2;
                         if (pageposition === "topright") {
-                            calc = pagewidth - marginright;
+                            calc = pagewidth - marginright - textwidth;
                         }
                         newpage.drawText(text, { x: calc, y: pageheight - pagemargin, size: pagefontsize, font: font })
                     }
