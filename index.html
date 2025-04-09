@@ -7,6 +7,7 @@
 
     <!-- required JS scripts -->
     <script src="pdf-lib.js"></script>
+    <script src="jszip.js"></script>
 
     <title>jscompile</title>
 
@@ -130,12 +131,12 @@
                 <input type="number" id="pagefontsize" name="pagefontsize" value="20" min="0" />
             </div>
             <div>
-                <label for="pagemargin">Margin from top </label>
-                <input type="number" id="pagemargin" name="pagemargin" value="30" />
+                <label for="pagemargin">Margin from top (in cm) </label>
+                <input type="number" id="pagemargin" name="pagemargin" value="1.27" />
             </div>
             <div>
-                <label for="marginright">Margin from right </label>
-                <input type="number" id="marginright" name="marginright" value="40" />
+                <label for="marginright">Margin from right (in cm)</label>
+                <input type="number" id="marginright" name="marginright" value="2.54" />
             </div>
             <div>
                 <legend>Position</legend>
@@ -224,13 +225,13 @@
 
     // function - add files
     function addFiles(fileList) {
-        for (const file of fileList) {
-            if (!filetypes.includes(file.type)) {
+        for (let i = 0; i < fileList.length; i++) {
+            if (!filetypes.includes(fileList[i].type)) {
                 console.log("file not pdf, jpg, or png");
                 continue;
             }
             files.push(file);
-            filesoutput.innerText += `${file.name}\n`;
+            filesoutput.innerText += `${i+1}. ${fileList[i].name}\n`;
         };
 
         if (files.length > 0) {
@@ -270,11 +271,8 @@
         var cell = headrow.insertCell();
         cell.textContent = "filename";
         cell.scope = "col";
-        var cell = headrow.insertCell();
-        cell.textContent = "start pg";
-        cell.scope = "col";
-        var cell = headrow.insertCell();
-        cell.textContent = "end pg";
+        cell = headrow.insertCell();
+        cell.textContent = "pages";
         cell.scope = "col";
         const tbody = table.createTBody();
 
@@ -284,9 +282,9 @@
         const skipfirsttext = document.getElementById("skipfirst").value;
         const skipArray = skipfirsttext.split(",").map(Number).filter(n => !isNaN(n));
         const pagefontsize = parseInt(document.getElementById("pagefontsize").value);
-        const pagemargin = parseInt(document.getElementById("pagemargin").value);
+        const pagemargin = parseInt(document.getElementById("pagemargin").value) * 28.346;
         const pageprefix = document.getElementById("pageprefix").value;
-        const marginright = parseInt(document.getElementById("marginright").value);
+        const marginright = parseInt(document.getElementById("marginright").value) * 28.346;
         const pageposition = document.querySelector("input[name='pageposition']:checked").value;
 
         const createtabs = document.getElementById("createtabs").checked;
@@ -313,10 +311,8 @@
             var row = tbody.insertRow();
             var cell = row.insertCell();
             cell.textContent = file.name;
-            var cell = row.insertCell();
-            if (paginate) {
-                cell.textContent = pageno;
-            }
+            cell = row.insertCell();
+            var startpg = pageno;
 
             // create tab
             if (createtabs) {
@@ -333,30 +329,23 @@
 
                     // paginate
                     if (paginate) {
-                        if (!skipArray.includes(pageno)) {
-                            let text = `${pageprefix}${pageno}`
-                            let textwidth = font.widthOfTextAtSize(text, pagefontsize);
-                            let pagewidth = newpage.getWidth();
-                            let pageheight = newpage.getHeight();
-                            let calc = (pagewidth - textwidth) / 2;
-                            if (pageposition === "topright") {
-                                calc = pagewidth - marginright - textwidth;
-                            }
-                            newpage.drawText(text, { x: calc, y: pageheight - pagemargin, size: pagefontsize, font: font })
-                        }
+                        paginatef(newpage, skipArray, pageno, pageprefix, pagefontsize, pageposition, pagemargin, marginright, font);
                     }
                     pageno++;
                     tabcount++;
+                    startpg++;
                 }
             }
 
             // get bytes and load current file
-            let arrayBuffer = await file.arrayBuffer();
-            let pdfbytes = new Uint8Array(arrayBuffer);
+            let pdfbytes = await file.bytes();
 
             // if pdf
             if (file.type === "application/pdf") {
-                let pdfsrc = await PDFDocument.load(pdfbytes);
+                let pdfsrc = await PDFDocument.load(pdfbytes, { ignoreEncryption: true });
+                if (pdfsrc.isEncrypted) {
+                    continue;
+                }
                 let pagecount = pdfsrc.getPageCount();
 
                 for (var j = 0; j < pagecount; j++) {
@@ -367,17 +356,7 @@
 
                     // paginate
                     if (paginate) {
-                        if (!skipArray.includes(pageno)) {
-                            let text = `${pageprefix}${pageno}`
-                            let textwidth = font.widthOfTextAtSize(text, pagefontsize);
-                            let pagewidth = newpage.getWidth();
-                            let pageheight = newpage.getHeight();
-                            let calc = (pagewidth - textwidth) / 2;
-                            if (pageposition === "topright") {
-                                calc = pagewidth - marginright - textwidth;
-                            }
-                            newpage.drawText(text, { x: calc, y: pageheight - pagemargin, size: pagefontsize, font: font })
-                        }
+                        paginatef(newpage, skipArray, pageno, pageprefix, pagefontsize, pageposition, pagemargin, marginright, font);
                     }
                     pageno++;
                 }
@@ -393,25 +372,16 @@
                 let pagewidth = newpage.getWidth();
                 let pageheight = newpage.getHeight();
                 var scaled = image.scaleToFit(pagewidth, pageheight);
-                newpage.drawImage(image, {x:(pagewidth-scaled.width)/2, y:(pageheight-scaled.height)/2, width:scaled.width, height:scaled.height});
+                newpage.drawImage(image, { x: (pagewidth - scaled.width) / 2, y: (pageheight - scaled.height) / 2, width: scaled.width, height: scaled.height });
                 // paginate
                 if (paginate) {
-                    if (!skipArray.includes(pageno)) {
-                        let text = `${pageprefix}${pageno}`
-                        let textwidth = font.widthOfTextAtSize(text, pagefontsize);
-                        let calc = (pagewidth - textwidth) / 2;
-                        if (pageposition === "topright") {
-                            calc = pagewidth - marginright - textwidth;
-                        }
-                        newpage.drawText(text, { x: calc, y: pageheight - pagemargin, size: pagefontsize, font: font })
-                    }
+                    paginatef(newpage, skipArray, pageno, pageprefix, pagefontsize, pageposition, pagemargin, marginright, font);
                 }
                 pageno++;
             }
 
-            var cell = row.insertCell();
             if (paginate) {
-                cell.textContent = pageno - 1;
+                cell.textContent = startpg == (pageno - 1) ? `${startpg}` : `${startpg} - ${pageno - 1}`;
             }
         }
 
@@ -434,6 +404,20 @@
             sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
             i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    }
+
+    function paginatef(newpage, skipArray, pageno, pageprefix, pagefontsize, pageposition, pagemargin, marginright, font) {
+        if (!skipArray.includes(pageno)) {
+            let text = `${pageprefix}${pageno}`
+            let textwidth = font.widthOfTextAtSize(text, pagefontsize);
+            let pagewidth = newpage.getWidth();
+            let pageheight = newpage.getHeight();
+            let calc = (pagewidth - textwidth) / 2;
+            if (pageposition === "topright") {
+                calc = pagewidth - marginright;
+            }
+            newpage.drawText(text, { x: calc, y: pageheight - pagemargin, size: pagefontsize, font: font })
+        }
     }
 
     async function handlePdf(pdfFile, pageno, blobs) {
