@@ -230,7 +230,7 @@
                 console.log("file not pdf, jpg, or png");
                 continue;
             }
-            files.push(file);
+            files.push(fileList[i]);
             filesoutput.innerText += `${i+1}. ${fileList[i].name}\n`;
         };
 
