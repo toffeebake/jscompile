@@ -76,7 +76,7 @@
         }
 
         #settings div {
-            display: block; 
+            /* display: block; */
             /* margin-bottom: 1em; */
         }
 
@@ -95,6 +95,10 @@
         .filetable thead {
             font-weight: bold;
         }
+        
+        .block {
+            display: block;
+        }
     </style>
 </head>
 
@@ -110,37 +114,36 @@
     <div id="settings">
         <button id="gen" disabled>compile</button>
         <div class="grpsettings">
+            <label for="paginate">Paginate? </label>
+            <input type="checkbox" id="paginate" name="paginate" checked />
             
-                <label for="paginate">Paginate? </label>
-                <input type="checkbox" id="paginate" name="paginate" checked />
-            
-                <label for="pageno">Starting page no: </label>
-                <input type="number" id="pageno" value="1" />
+            <label for="pageno">Starting page no: </label>
+            <input type="number" id="pageno" value="1" />
                 <!-- <p id="maxpages"></p> -->
             
-                <label for="pageprefix">Prefix: </label>
-                <input type="text" id="pageprefix" name="pageprefix" value="" />
+            <label for="pageprefix">Prefix: </label>
+            <input type="text" id="pageprefix" name="pageprefix" value="" />
             
-                <label for="skipfirst">Skip these pg no(s) (delimit using comma)</label>
-                <input type="text" id="skipfirst" name="skipfirst" value="1" />
+            <label for="skipfirst">Skip these pg no(s) (delimit using comma)</label>
+            <input type="text" id="skipfirst" name="skipfirst" value="1" />
             
-                <label for="pagefontsize">Font size </label>
-                <input type="number" id="pagefontsize" name="pagefontsize" value="20" min="0" />
+            <label for="pagefontsize">Font size </label>
+            <input type="number" id="pagefontsize" name="pagefontsize" value="20" min="0" />
             
-                <label for="pagemargin">Margin from top (in cm) </label>
-                <input type="number" id="pagemargin" name="pagemargin" value="1.27" />
+            <label for="pagemargin">Margin from top (in cm) </label>
+            <input type="number" id="pagemargin" name="pagemargin" value="1.27" />
             
-                <label for="marginright">Margin from right (in cm)</label>
-                <input type="number" id="marginright" name="marginright" value="2.54" />
+            <label for="marginright">Margin from right (in cm)</label>
+            <input type="number" id="marginright" name="marginright" value="2.54" />
             
-                <legend>Position</legend>
-                <div>
+            <legend>Position</legend>
+            <div class="block">
                 <input type="radio" id="topcenter" name="pageposition" value="topcenter" checked />
                 <label for="topcenter">Top-center</label>
 
                 <input type="radio" id="topright" name="pageposition" value="topright" />
                 <label for="topright">Top-right</label>
-                </div>
+            </div>
             <!-- center, center right -->
         </div>
 
