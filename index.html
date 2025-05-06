@@ -76,11 +76,13 @@
         }
 
         #settings div {
-            display: block;
+            display: block; 
             /* margin-bottom: 1em; */
         }
 
         .grpsettings {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             padding: 1em;
             border: dotted;
             margin-top: 1em;
@@ -108,67 +110,59 @@
     <div id="settings">
         <button id="gen" disabled>compile</button>
         <div class="grpsettings">
-            <div>
+            
                 <label for="paginate">Paginate? </label>
                 <input type="checkbox" id="paginate" name="paginate" checked />
-            </div>
-            <div>
+            
                 <label for="pageno">Starting page no: </label>
                 <input type="number" id="pageno" value="1" />
                 <!-- <p id="maxpages"></p> -->
-            </div>
-            <div>
+            
                 <label for="pageprefix">Prefix: </label>
                 <input type="text" id="pageprefix" name="pageprefix" value="" />
-            </div>
-            <div>
+            
                 <label for="skipfirst">Skip these pg no(s) (delimit using comma)</label>
                 <input type="text" id="skipfirst" name="skipfirst" value="1" />
-            </div>
-            <div>
+            
                 <label for="pagefontsize">Font size </label>
                 <input type="number" id="pagefontsize" name="pagefontsize" value="20" min="0" />
-            </div>
-            <div>
+            
                 <label for="pagemargin">Margin from top (in cm) </label>
                 <input type="number" id="pagemargin" name="pagemargin" value="1.27" />
-            </div>
-            <div>
+            
                 <label for="marginright">Margin from right (in cm)</label>
                 <input type="number" id="marginright" name="marginright" value="2.54" />
-            </div>
-            <div>
+            
                 <legend>Position</legend>
+                <div>
                 <input type="radio" id="topcenter" name="pageposition" value="topcenter" checked />
                 <label for="topcenter">Top-center</label>
 
                 <input type="radio" id="topright" name="pageposition" value="topright" />
                 <label for="topright">Top-right</label>
-            </div>
+                </div>
             <!-- center, center right -->
         </div>
 
         <div class="grpsettings">
-            <div>
+            
                 <label for="createtabs">Create tabs? </label>
                 <input type="checkbox" id="createtabs" name="createtabs" checked />
-            </div>
-            <div>
+            
+
                 <label for="tabprefix">Tab prefix: </label>
                 <input type="text" id="tabprefix" name="tabprefix" value="TAB-" />
-            </div>
-            <div>
+            
+            
                 <label for="tabcount">Starting tab count </label>
                 <input type="number" id="tabcount" value="1" />
-            </div>
-            <div>
+            
                 <label for="skiptabs">Skip tabs for first X file(s) </label>
                 <input type="number" id="skiptabs" value="1" />
-            </div>
-            <div>
+            
                 <label for="tabfontsize">Font size </label>
                 <input type="number" id="tabfontsize" name="tabfontsize" value="50" min="0" />
-            </div>
+            
             <!-- page size -->
         </div>
     </div>
