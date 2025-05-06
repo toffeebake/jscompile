@@ -114,8 +114,8 @@
     <div id="settings">
         <button id="gen" disabled>compile</button>
         <div class="grpsettings">
-            <input type="checkbox" id="paginate" name="paginate" checked />
             <strong><label for="paginate">Paginate?</label></strong>
+            <input type="checkbox" id="paginate" name="paginate" checked />
             
             <label for="pageno">Starting page no: </label>
             <input type="number" id="pageno" value="1" />
@@ -137,34 +137,31 @@
             <input type="number" id="marginright" name="marginright" value="2.54" />
             
             <legend>Position</legend>
-            <div class="block">
+            <section class="block">
                 <input type="radio" id="topcenter" name="pageposition" value="topcenter" checked />
                 <label for="topcenter">Top-center</label>
 
                 <input type="radio" id="topright" name="pageposition" value="topright" />
                 <label for="topright">Top-right</label>
-            </div>
+            </section>
             <!-- center, center right -->
         </div>
 
         <div class="grpsettings">
+            <strong><label for="createtabs">Create tabs? </label></strong>
+            <input type="checkbox" id="createtabs" name="createtabs" checked />
             
-                <label for="createtabs">Create tabs? </label>
-                <input type="checkbox" id="createtabs" name="createtabs" checked />
+            <label for="tabprefix">Tab prefix: </label>
+            <input type="text" id="tabprefix" name="tabprefix" value="TAB-" />
             
-
-                <label for="tabprefix">Tab prefix: </label>
-                <input type="text" id="tabprefix" name="tabprefix" value="TAB-" />
+            <label for="tabcount">Starting tab count </label>
+            <input type="number" id="tabcount" value="1" />
             
+            <label for="skiptabs">Skip tabs for first X file(s) </label>
+            <input type="number" id="skiptabs" value="1" />
             
-                <label for="tabcount">Starting tab count </label>
-                <input type="number" id="tabcount" value="1" />
-            
-                <label for="skiptabs">Skip tabs for first X file(s) </label>
-                <input type="number" id="skiptabs" value="1" />
-            
-                <label for="tabfontsize">Font size </label>
-                <input type="number" id="tabfontsize" name="tabfontsize" value="50" min="0" />
+            <label for="tabfontsize">Font size </label>
+            <input type="number" id="tabfontsize" name="tabfontsize" value="50" min="0" />
             
             <!-- page size -->
         </div>
