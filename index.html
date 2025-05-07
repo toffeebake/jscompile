@@ -328,7 +328,7 @@
                     var newpage = pdfdoc.addPage(PDFLib.PageSizes.A4);
 
                     let text = `${tabprefix}${tabalpha ? numberToLetters(tabcount) : tabcount}`;
-                    let textwidth = font.widthOfTextAtSize(text, tabfontsize);
+                    let textwidth = tabbold ? fontbold.widthOfTextAtSize(text, tabfontsize) : font.widthOfTextAtSize(text, tabfontsize);
                     let textheight = font.heightAtSize(tabfontsize);
                     let calcwidth = (newpage.getWidth() - textwidth) / 2;
                     let calcheight = (newpage.getHeight() - textheight) / 2;
@@ -430,11 +430,11 @@
             let textwidth = font.widthOfTextAtSize(text, pagefontsize);
             let pagewidth = newpage.getWidth();
             let pageheight = newpage.getHeight();
-            let calc = (pagewidth - textwidth) / 2;
+            let xcalc = (pagewidth - textwidth) / 2;
             if (pageposition === "topright") {
-                calc = pagewidth - marginright;
+                xcalc = pagewidth - marginright - textwidth;
             }
-            newpage.drawText(text, { x: calc, y: pageheight - pagemargin, size: pagefontsize, font: font })
+            newpage.drawText(text, { x: xcalc, y: pageheight - pagemargin, size: pagefontsize, font: font })
         }
     }
 
