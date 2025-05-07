@@ -410,6 +410,16 @@
             i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
     }
+    
+    function numberToLetters(num) {
+        let result = '';
+        while (num > 0) {
+            num--; // Adjust for 0-indexing
+            result = String.fromCharCode((num % 26) + 65) + result;
+            num = Math.floor(num / 26);
+        }
+        return result;
+    }
 
     function paginatef(newpage, skipArray, pageno, pageprefix, pagefontsize, pageposition, pagemargin, marginright, font) {
         if (!skipArray.includes(pageno)) {
