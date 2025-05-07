@@ -297,12 +297,17 @@
         const skiptabs = parseInt(document.getElementById("skiptabs").value);
         const tabfontsize = parseInt(document.getElementById("tabfontsize").value);
         var tabcount = parseInt(document.getElementById("tabcount").value);
+        const tabalpha = document.getElementById("tabalpha").checked;
+        const tabbold = document.getElementById("tabbold").checked;
 
         // create pdf file containing output
         const PDFDocument = PDFLib.PDFDocument;
         const pagesizes = PDFLib.PageSizes;
         const pdfdoc = await PDFDocument.create();
         const font = await pdfdoc.embedFont(PDFLib.StandardFonts.Helvetica);
+        if (tabbold) {
+            const fontbold = await pdfdoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+        }
 
         // loop over filelist
         for (let i = 0; i < files.length; i++) {
@@ -321,16 +326,16 @@
 
             // create tab
             if (createtabs) {
-                if (i >= skiptabs) {
+                if (i >= skiptabs - 1) {
                     var newpage = pdfdoc.addPage(PDFLib.PageSizes.A4);
 
-                    let text = `${tabprefix}${tabcount}`;
+                    let text = `${tabprefix}${tabalpha ? numbersToLetters(tabcount) : tabcount}`;
                     let textwidth = font.widthOfTextAtSize(text, tabfontsize);
                     let textheight = font.heightAtSize(tabfontsize);
                     let calcwidth = (newpage.getWidth() - textwidth) / 2;
                     let calcheight = (newpage.getHeight() - textheight) / 2;
 
-                    newpage.drawText(text, { x: calcwidth, y: calcheight, size: tabfontsize, font: font })
+                    newpage.drawText(text, { x: calcwidth, y: calcheight, size: tabfontsize, font: tabbold ? fontbold : font })
 
                     // paginate
                     if (paginate) {
