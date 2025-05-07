@@ -305,9 +305,7 @@
         const pagesizes = PDFLib.PageSizes;
         const pdfdoc = await PDFDocument.create();
         const font = await pdfdoc.embedFont(PDFLib.StandardFonts.Helvetica);
-        if (tabbold) {
-            const fontbold = await pdfdoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
-        }
+        const fontbold = tabbold ? await pdfdoc.embedFont(PDFLib.StandardFonts.HelveticaBold) : null; 
 
         // loop over filelist
         for (let i = 0; i < files.length; i++) {
