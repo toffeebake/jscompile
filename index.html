@@ -329,7 +329,7 @@
                 if (i >= skiptabs - 1) {
                     var newpage = pdfdoc.addPage(PDFLib.PageSizes.A4);
 
-                    let text = `${tabprefix}${tabalpha ? numbersToLetters(tabcount) : tabcount}`;
+                    let text = `${tabprefix}${tabalpha ? numberToLetters(tabcount) : tabcount}`;
                     let textwidth = font.widthOfTextAtSize(text, tabfontsize);
                     let textheight = font.heightAtSize(tabfontsize);
                     let calcwidth = (newpage.getWidth() - textwidth) / 2;
