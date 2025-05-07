@@ -71,11 +71,11 @@
             padding-top: 1em;
         }
 
-        #settings {
+        .settings {
             padding-top: 1em;
         }
 
-        #settings section {
+        .settings section {
             display: block;
             /* margin-bottom: 1em; */
         }
@@ -112,7 +112,7 @@
         <input type="file" id="input" multiple accept=".pdf,.jpg,.png" />
         <pre id="filesoutput"></pre>
     </div>
-    <div id="settings">
+    <div class="settings">
         <button id="gen" disabled>compile</button>
         <div class="grpsettings">
             <strong><label for="paginate">Paginate?</label></strong>
@@ -128,16 +128,16 @@
                 <a href="#">Page</a>
             </section>
             
-            <label for="skipfirst">These page number(s) will not be visible <br /> (delimit using comma)</label>
+            <label for="skipfirst">These page number(s) will not be visible: <br /> (delimit using comma)</label>
             <input type="text" id="skipfirst" name="skipfirst" value="1" />
             
-            <label for="pagefontsize">Font size </label>
+            <label for="pagefontsize">Font size: </label>
             <input type="number" id="pagefontsize" name="pagefontsize" value="20" min="0" />
             
-            <label for="pagemargin">Margin from top (in cm) </label>
+            <label for="pagemargin">Margin from top (in cm): </label>
             <input type="number" id="pagemargin" name="pagemargin" value="1.27" />
             
-            <label for="marginright">Margin from right (in cm)</label>
+            <label for="marginright">Margin from right (in cm): </label>
             <input type="number" id="marginright" name="marginright" value="2.54" />
             
             <legend>Position</legend>
@@ -148,7 +148,6 @@
                 <input type="radio" id="topright" name="pageposition" value="topright" />
                 <label for="topright">Top-right</label>
             </section>
-            <!-- center, center right -->
         </div>
 
         <div class="grpsettings">
@@ -158,14 +157,23 @@
             <label for="tabprefix">Tab prefix: </label>
             <input type="text" id="tabprefix" name="tabprefix" value="TAB-" />
             
-            <label for="tabcount">Starting tab count </label>
-            <input type="number" id="tabcount" value="1" />
+            <label for="tabcount">Starting tab count: </label>
+            <section>
+                <input type="number" id="tabcount" value="1" />
+                <input type="checkbox" id="tabalpha" name="tabalpha" />
+                <label for="tabalpha">Alphabetical</label>
+            </section>
             
-            <label for="skiptabs">Skip tabs for first X file(s) </label>
+            <label for="skiptabs">Start tabs on file number: </label>
             <input type="number" id="skiptabs" value="1" />
             
-            <label for="tabfontsize">Font size </label>
-            <input type="number" id="tabfontsize" name="tabfontsize" value="50" min="0" />
+            <label for="tabfontsize">Font size: </label>
+            <section>
+                <input type="number" id="tabfontsize" name="tabfontsize" value="50" min="0" />
+                
+                <input type="checkbox" id="tabbold" name="tabbold" checked />
+                <label for="tabbold>Bold</label>
+            </section>
             
             <!-- page size -->
         </div>
