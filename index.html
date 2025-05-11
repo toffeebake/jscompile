@@ -76,7 +76,8 @@
         }
 
         .settings section {
-            display: block;
+            display: flex;
+            flex-direction: column;
             /* margin-bottom: 1em; */
         }
 
@@ -96,9 +97,17 @@
         .filetable thead {
             font-weight: bold;
         }
-        
+
         .block {
             display: block;
+        }
+
+        .monospace {
+            font-family: monospace;
+        }
+
+        #grpoffset div {
+            margin-bottom: 0.5em;
         }
     </style>
 </head>
@@ -111,73 +120,105 @@
     <div id="upload">
         <input type="file" id="input" multiple accept=".pdf,.jpg,.png" />
         <pre id="filesoutput"></pre>
+        <table class="monospace">
+            <thead>
+                <th>Order</th>
+                <th>File</th>
+                <th>Bookmark</th>
+                <th>Offset, horiz.</th>
+                <th>Offset, verti.</th>
+            </thead>
+            <tbody id="filelist"></tbody>
+        </table>
     </div>
     <div class="settings">
         <button id="gen" disabled>compile</button>
+        <button id="clear" disabled>clear</button>
+        <button id="sortasc" title="sort before editing settings">sort asc</button>
         <div class="grpsettings">
             <strong><label for="paginate">Paginate?</label></strong>
             <input type="checkbox" id="paginate" name="paginate" checked />
-            
+
             <label for="pageno">Starting page number: </label>
             <input type="number" id="pageno" value="1" />
-                <!-- <p id="maxpages"></p> -->
-            
+            <!-- <p id="maxpages"></p> -->
+
             <label for="pageprefix">Prefix: </label>
             <section>
                 <input type="text" id="pageprefix" name="pageprefix" value="" />
-                <a href="#">Page&nbsp;</a>
+                <a href="javascript:void(0);" id="pgpreset1">Page&nbsp;</a>
             </section>
-            
+
             <label for="skipfirst">These page number(s) will not be visible: <br /> (delimit using comma)</label>
             <input type="text" id="skipfirst" name="skipfirst" value="1" />
-            
+
             <label for="pagefontsize">Font size: </label>
             <input type="number" id="pagefontsize" name="pagefontsize" value="20" min="0" />
-            
-            <label for="pagemargin">Margin from top (cm): </label>
-            <input type="number" id="pagemargin" name="pagemargin" value="1.27" />
-            
-            <label for="marginright">Margin from right (cm): </label>
-            <input type="number" id="marginright" name="marginright" value="2.54" />
-            
-            <legend>Position</legend>
-            <section class="block">
-                <input type="radio" id="topcenter" name="pageposition" value="topcenter" checked />
-                <label for="topcenter">Top-center</label>
 
-                <input type="radio" id="topright" name="pageposition" value="topright" />
-                <label for="topright">Top-right</label>
+            <label for="pagemargin">Margin (cm), top/bottom: </label>
+            <input type="number" id="pagemargin" name="pagemargin" value="1.27" />
+
+            <label for="marginright">Margin (cm), left/right: </label>
+            <input type="number" id="marginright" name="marginright" value="2.54" />
+
+            <legend>Position: </legend>
+            <section>
+                <div>
+                    <input type="radio" id="topcenter" name="pageposition" value="topcenter" checked />
+                    <label for="topcenter">Top-center</label>
+
+                    <input type="radio" id="topright" name="pageposition" value="topright" />
+                    <label for="topright">Top-right</label>
+                </div>
+            </section>
+
+            <p>Specific page offsets: <a href="javascript:void(0);" id="addpageoffset">add</a> <br /> + right, top; - left, bottom</p>
+            <section id="grpoffset">
+                <!-- <div>
+                    <input type="number" class="pageoffsets" placeholder="page number" min="0"/>
+                    <input type="number" class="pageoffsetx" placeholder="offset, horiz."/>
+                    <input type="number" class="pageoffsety" placeholder="offset, verti."/>
+                    <a href="#" class="removepageoffset">x</a>
+                </div> -->
+
             </section>
         </div>
 
         <div class="grpsettings">
             <strong><label for="createtabs">Create tabs? </label></strong>
             <input type="checkbox" id="createtabs" name="createtabs" checked />
-            
+
             <label for="tabprefix">Tab prefix: </label>
             <section>
                 <input type="text" id="tabprefix" name="tabprefix" value="TAB-" />
-                <a href="#">TAB&nbsp;</a>
+                <div>
+                    <a href="javascript:void(0);" class="tabpreset">TAB&nbsp;</a>
+                    <a href="javascript:void(0);" class="tabpreset">TAB-</a>
+                </div>
+
             </section>
-            
+
             <label for="tabcount">Starting tab count: </label>
             <section>
                 <input type="number" id="tabcount" value="1" />
-                <input type="checkbox" id="tabalpha" name="tabalpha" />
-                <label for="tabalpha">Alphabetical</label>
+                <div>
+                    <input type="checkbox" id="tabalpha" name="tabalpha" />
+                    <label for="tabalpha">Alphabetical</label>
+                </div>
             </section>
-            
+
             <label for="skiptabs">Start tabs on file number: </label>
             <input type="number" id="skiptabs" value="1" />
-            
+
             <label for="tabfontsize">Font size: </label>
             <section>
                 <input type="number" id="tabfontsize" name="tabfontsize" value="50" min="0" />
-                
-                <input type="checkbox" id="tabbold" name="tabbold" checked />
-                <label for="tabbold">Bold</label>
+                <div>
+                    <input type="checkbox" id="tabbold" name="tabbold" checked />
+                    <label for="tabbold">Bold</label>
+                </div>
             </section>
-            
+
             <!-- page size -->
         </div>
     </div>
@@ -188,6 +229,7 @@
 
 <script>
     const preview = document.getElementById("preview")
+    const filetable = document.getElementById("filelist")
     var files = []
     const filesoutput = document.querySelector("#filesoutput");
     const filetypes = ["application/pdf", "image/jpeg", "image/png"]
@@ -231,25 +273,81 @@
         addFiles(fileList);
     }
 
+    const gen = document.getElementById('gen')
+    const clear = document.getElementById('clear')
+
     // function - add files
+    function insertRowFileTable(order, name) {
+        let row = filelist.insertRow();
+        var cell = row.insertCell();
+        cell.textContent = `${order}.`;
+        cell = row.insertCell();
+        cell.textContent = `${name}`;
+        cell = row.insertCell();
+        var input = document.createElement("input");
+        input.setAttribute("type", "text");
+        input.classList.add("outline")
+        cell.appendChild(input);
+        cell = row.insertCell();
+        var input = document.createElement("input");
+        input.setAttribute("type", "number");
+        input.classList.add("offsetx")
+        input.value = 0;
+        cell.appendChild(input);
+        cell = row.insertCell();
+        var input = document.createElement("input");
+        input.setAttribute("type", "number");
+        input.classList.add("offsety")
+        input.value = 0;
+        cell.appendChild(input);
+    }
+
     function addFiles(fileList) {
+        if (files.length == 0) {
+            filelist.innerHTML = ''
+        }
+
         for (let i = 0; i < fileList.length; i++) {
             if (!filetypes.includes(fileList[i].type)) {
                 console.log("file not pdf, jpg, or png");
                 continue;
             }
-            files.push(fileList[i]);
-            filesoutput.innerText += `${i+1}. ${fileList[i].name}\n`;
+            var num = files.push(fileList[i]);
+            //filesoutput.innerText += `${i + 1}. ${fileList[i].name}\n`;
+
+            insertRowFileTable(num, fileList[i].name)
         };
 
         if (files.length > 0) {
             gen.removeAttribute('disabled');
+            clear.removeAttribute('disabled');
+        }
+    }
+
+    clear.addEventListener("click", clearfiles, false)
+    function clearfiles() {
+        files = [];
+        filelist.innerHTML = ''
+        gen.setAttribute('disabled', "");
+        clear.setAttribute('disabled', "");
+    }
+
+    const sortasc = document.getElementById("sortasc")
+    sortasc.addEventListener("click", sortfiles, false)
+    function sortfiles() {
+        filelist.innerHTML = ''
+        files.sort((a, b) => (a.name).localeCompare(b.name))
+        for (let i = 0; i < files.length; i++) {
+            insertRowFileTable(i + 1, files[i].name)
         }
     }
 
     // compile button - add handler compile
-    const gen = document.getElementById('gen')
     gen.addEventListener("click", compile, false)
+
+    var pageoffsets;
+    var pageoffsetsX;
+    var pageoffsetsY;
 
     // compile handler
     async function compile() {
@@ -289,26 +387,35 @@
         var pageno = parseInt(document.getElementById("pageno").value);
         const skipfirsttext = document.getElementById("skipfirst").value;
         const skipArray = skipfirsttext.split(",").map(Number).filter(n => !isNaN(n));
-        const pagefontsize = parseInt(document.getElementById("pagefontsize").value);
-        const pagemargin = parseInt(document.getElementById("pagemargin").value) * 28.346;
+        const pagefontsize = Number(document.getElementById("pagefontsize").value);
+        const pagemargin = Number(document.getElementById("pagemargin").value) * 28.346;
         const pageprefix = document.getElementById("pageprefix").value;
-        const marginright = parseInt(document.getElementById("marginright").value) * 28.346;
+        const marginright = Number(document.getElementById("marginright").value) * 28.346;
         const pageposition = document.querySelector("input[name='pageposition']:checked").value;
 
         const createtabs = document.getElementById("createtabs").checked;
         const tabprefix = document.getElementById("tabprefix").value;
         const skiptabs = parseInt(document.getElementById("skiptabs").value);
-        const tabfontsize = parseInt(document.getElementById("tabfontsize").value);
+        const tabfontsize = Number(document.getElementById("tabfontsize").value);
         var tabcount = parseInt(document.getElementById("tabcount").value);
         const tabalpha = document.getElementById("tabalpha").checked;
         const tabbold = document.getElementById("tabbold").checked;
+
+        const offsetsX = [...document.getElementsByClassName("offsetx")].map((x) => Number(x.value) ? Number(x.value) * 28.346 : 0)
+        const offsetsY = [...document.getElementsByClassName("offsety")].map((x) => Number(x.value) ? Number(x.value) * 28.346 : 0)
+
+        pageoffsets = [...document.getElementsByClassName("pageoffsets")].map((x) => Number(x.value) ? Number(x.value) : -999)
+        pageoffsetsX = [...document.getElementsByClassName("pageoffsetx")].map((x) => Number(x.value) ? Number(x.value) * 28.346 : 0)
+        pageoffsetsY = [...document.getElementsByClassName("pageoffsety")].map((x) => Number(x.value) ? Number(x.value) * 28.346 : 0)
 
         // create pdf file containing output
         const PDFDocument = PDFLib.PDFDocument;
         const pagesizes = PDFLib.PageSizes;
         const pdfdoc = await PDFDocument.create();
         const font = await pdfdoc.embedFont(PDFLib.StandardFonts.Helvetica);
-        const fontbold = tabbold ? await pdfdoc.embedFont(PDFLib.StandardFonts.HelveticaBold) : null; 
+        const fontbold = tabbold ? await pdfdoc.embedFont(PDFLib.StandardFonts.HelveticaBold) : null;
+
+        const startpgs = [];
 
         // loop over filelist
         for (let i = 0; i < files.length; i++) {
@@ -324,6 +431,7 @@
             cell.textContent = file.name;
             cell = row.insertCell();
             var startpg = pageno;
+            startpgs.push(pageno - 1);
 
             // create tab
             if (createtabs) {
@@ -367,7 +475,7 @@
 
                     // paginate
                     if (paginate) {
-                        paginatef(newpage, skipArray, pageno, pageprefix, pagefontsize, pageposition, pagemargin, marginright, font);
+                        paginatef(newpage, skipArray, pageno, pageprefix, pagefontsize, pageposition, pagemargin, marginright, font, offsetsX[i], offsetsY[i]);
                     }
                     pageno++;
                 }
@@ -386,7 +494,7 @@
                 newpage.drawImage(image, { x: (pagewidth - scaled.width) / 2, y: (pageheight - scaled.height) / 2, width: scaled.width, height: scaled.height });
                 // paginate
                 if (paginate) {
-                    paginatef(newpage, skipArray, pageno, pageprefix, pagefontsize, pageposition, pagemargin, marginright, font);
+                    paginatef(newpage, skipArray, pageno, pageprefix, pagefontsize, pageposition, pagemargin, marginright, font, offsetsX[i], offsetsY[i]);
                 }
                 pageno++;
             }
@@ -396,15 +504,57 @@
             }
         }
 
+        // create outlines
+        var outlinearr = [...document.getElementsByClassName("outline")].map((x) => x.value);
+
+        const pageRefs = getPageRefs(pdfdoc);
+        const rootRef = pdfdoc.context.nextRef();
+        var curRef = null;
+        var nextRef = pdfdoc.context.nextRef();
+
+        var outlines = [];
+        var outlineRefs = [];
+
+        // creating outline items
+        for (let k = 0; k < outlinearr.length; k++) {
+            if (outlinearr[k]) {
+                curRef = nextRef
+                nextRef = pdfdoc.context.nextRef();
+                const outlineitem = createOutlineItem(pdfdoc, outlinearr[k], rootRef, k == outlinearr.length ? curRef : nextRef, pageRefs[startpgs[k]], k == outlinearr.length ? true : false);
+
+                outlines.push(outlineitem)
+                outlineRefs.push(curRef)
+            }
+        }
+
+        if (outlines.length > 0) {
+            const outlinesDictMap = new Map();
+            outlinesDictMap.set(PDFLib.PDFName.Type, PDFLib.PDFName.of("Outlines"));
+            outlinesDictMap.set(PDFLib.PDFName.of("First"), outlineRefs[0]);
+            outlinesDictMap.set(PDFLib.PDFName.of("Last"), outlineRefs[outlineRefs.length - 1]);
+            outlinesDictMap.set(PDFLib.PDFName.of("Count"), PDFLib.PDFNumber.of(outlineRefs.length));
+
+            //Pointing the "Outlines" property of the PDF's "Catalog" to the first object of your outlines
+            pdfdoc.catalog.set(PDFLib.PDFName.of("Outlines"), rootRef)
+            const outlinesDict = PDFLib.PDFDict.fromMapWithContext(outlinesDictMap, pdfdoc.context);
+
+            //First 'Outline' object. Refer to table H.3 in Annex H.6 of PDF Specification doc.
+            pdfdoc.context.assign(rootRef, outlinesDict);
+
+            for (let l = 0; l < outlines.length; l++) {
+                pdfdoc.context.assign(outlineRefs[l], outlines[l]);
+            }
+        }
+
         const outpdfBytes = await pdfdoc.save()
         const outBlob = new Blob([outpdfBytes], { type: 'application/pdf' })
         outBlob.name = `compile-${div.id}.pdf`;
         const newLink = URL.createObjectURL(outBlob);
         li.innerHTML = `<a href="${newLink}" download="${outBlob.name}" target="_blank" class="pdfdl">${outBlob.name}</a> (${formatBytes(outBlob.size)})`
 
-        files = [];
-        gen.setAttribute('disabled', "");
-        filesoutput.innerText = "";
+        //files = [];
+        //gen.setAttribute('disabled', "");
+        //filesoutput.innerText = "";
         // need to clear list
     };
 
@@ -416,7 +566,7 @@
             i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
     }
-    
+
     function numberToLetters(num) {
         let result = '';
         while (num > 0) {
@@ -427,86 +577,100 @@
         return result;
     }
 
-    function paginatef(newpage, skipArray, pageno, pageprefix, pagefontsize, pageposition, pagemargin, marginright, font) {
+    function paginatef(newpage, skipArray, pageno, pageprefix, pagefontsize, pageposition, pagemargin, marginright, font, offsetX = 0, offsetY = 0) {
         if (!skipArray.includes(pageno)) {
             let text = `${pageprefix}${pageno}`
             let textwidth = font.widthOfTextAtSize(text, pagefontsize);
             let pagewidth = newpage.getWidth();
             let pageheight = newpage.getHeight();
-            let xcalc = (pagewidth - textwidth) / 2;
+            let xcalc = ((pagewidth - textwidth) / 2);
             if (pageposition === "topright") {
                 xcalc = pagewidth - marginright - textwidth;
             }
-            newpage.drawText(text, { x: xcalc, y: pageheight - pagemargin, size: pagefontsize, font: font })
+
+            let index = pageoffsets.indexOf(pageno)
+            if (index > -1) {
+                offsetX = pageoffsetsX[index]
+                offsetY = pageoffsetsY[index]
+            }
+
+            newpage.drawText(text, { x: xcalc + offsetX, y: pageheight - pagemargin + offsetY, size: pagefontsize, font: font })
         }
     }
 
-    async function handlePdf(pdfFile, pageno, blobs) {
-        const PDFDocument = PDFLib.PDFDocument;
+    const getPageRefs = (pdfDoc) => {
+        const refs = [];
+        pdfDoc.catalog.Pages().traverse((kid, ref) => {
+            if (kid instanceof PDFLib.PDFPageLeaf) refs.push(ref);
+        });
+        return refs;
+    };
 
-        // get binary of pdf
-        const pdfFileBytes = await pdfFile.arrayBuffer()
+    const createOutlineItem = (pdfDoc, title, parent, nextOrPrev, page, isLast = false) => {
+        let array = PDFLib.PDFArray.withContext(pdfDoc.context);
+        array.push(page);
+        array.push(PDFLib.PDFName.of("XYZ"));
+        array.push(PDFLib.PDFNull);
+        array.push(PDFLib.PDFNull);
+        array.push(PDFLib.PDFNull);
+        const map = new Map();
+        map.set(PDFLib.PDFName.Title, PDFLib.PDFString.of(title));
+        map.set(PDFLib.PDFName.Parent, parent);
+        map.set(PDFLib.PDFName.of(isLast ? "Prev" : "Next"), nextOrPrev);
+        map.set(PDFLib.PDFName.of("Dest"), array);
 
-        // get PDFDocument object
-        const pdfSrc = await PDFDocument.load(pdfFileBytes)
-
-        // check pages
-        // const pageCount = pdfSrc.getPageCount()
-        // if (pageCount % 2 == 1){
-        //     console.log('added blank')
-        //     const { width, height } = pdfSrc.getPage(1).getSize()
-        //     pdfSrc.addPage([width, height])
-        // }
-
-        // twoup
-        const pdfDoc = await PDFDocument.create();
-
-        const newPageCount = pdfSrc.getPageCount()
-        for (let j = 0; j < newPageCount; j = j + 2) {
-            console.log(j)
-            const [page1] = await pdfDoc.copyPages(pdfSrc, [j])
-            if (j == newPageCount - 1) {
-                let newPage1 = pdfDoc.addPage(page1)
-                newPage1.setSize(page1.getWidth() * 2, page1.getHeight())
-                continue
-            }
-            const [page2] = await pdfDoc.copyPages(pdfSrc, [j + 1])
-            // const page2 = pdfDoc.copyPages(pdfSrc,[k])
-            // const [page1, page2] = pdfDoc.copyPages(pdfSrc, [j, k])
-            // console.log(page2.node.Contents())
-            // page2.drawLine({
-            //     start: {x:0, y:0},
-            //     end: {x:0, y:0},
-            //     thickness: 0,
-            //     opacity: 0,
-            // })
-
-
-            let newPage1 = pdfDoc.addPage(page1)
-            // check if page2 is empty before embedding
-            if (page2.node.Contents()) {
-                const embedPage = await pdfDoc.embedPage(page2)
-                newPage1.drawPage(embedPage, { x: newPage1.getWidth() })
-                newPage1.setSize(page1.getWidth() + page2.getWidth(), page1.getHeight())
-            }
-            else {
-                newPage1.setSize(page1.getWidth() * 2, page1.getHeight());
-            }
-        }
-
-        // save
-        // const pdfDataUri = await pdfDoc.saveAsBase64({ dataUri: true });
-        // iframe.src = pdfDataUri
-        const pdfBytes = await pdfDoc.save()
-        const outBlob = new Blob([pdfBytes], { type: 'application/pdf' })
-        // set outBlob name
-        let filename = pdfFile.name
-        let newname = filename.replace('.pdf', '-2up.pdf')
-        outBlob.name = newname
-
-        const newLink = URL.createObjectURL(outBlob);
-        li.innerHTML = `<a href="${newLink}" download="${newname}" target="_blank" class="pdfdl">${newname}</a> (${outBlob.size}B)`
+        return PDFLib.PDFDict.fromMapWithContext(map, pdfDoc.context);
     }
+
+    // const pdfDataUri = await pdfDoc.saveAsBase64({ dataUri: true });
+    // iframe.src = pdfDataUri
+
+    const pgpreset1 = document.getElementById("pgpreset1")
+    pgpreset1.addEventListener("click", () => document.getElementById("pageprefix").value = pgpreset1.innerText, false);
+
+    const tabpresets = [...document.getElementsByClassName("tabpreset")]
+    const tabprefix = document.getElementById("tabprefix")
+    tabpresets.forEach(element => {
+        element.addEventListener("click", () => tabprefix.value = element.innerText, false);
+    });
+
+    const addpageoffset = document.getElementById("addpageoffset")
+    const grpoffset = document.getElementById("grpoffset")
+    addpageoffset.addEventListener("click", (event) => {
+        let div = document.createElement("div")
+        var input = document.createElement("input")
+        input.setAttribute("type", "number")
+        input.setAttribute("placeholder", "pagenumber")
+        input.setAttribute("min", 0)
+        input.classList.add("pageoffsets")
+        div.appendChild(input)
+
+        input = document.createElement("input")
+        input.setAttribute("type", "number")
+        input.setAttribute("placeholder", "offset, horiz.")
+        input.classList.add("pageoffsetx")
+        div.appendChild(input)
+
+        input = document.createElement("input")
+        input.setAttribute("type", "number")
+        input.setAttribute("placeholder", "offset, verti.")
+        input.classList.add("pageoffsety")
+        div.appendChild(input)
+
+        let remove = document.createElement("a")
+        remove.setAttribute("href", "javascript:void(0);")
+        remove.innerText = "x"
+        div.appendChild(remove)
+        remove.addEventListener("click", removeoffset, false)
+
+        grpoffset.appendChild(div)
+    }, false);
+
+    function removeoffset(event) {
+        event.preventDefault();
+        event.target.parentNode.remove();
+    }
+
 </script>
 
 </html>
