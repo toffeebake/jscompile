@@ -18,6 +18,11 @@
 
         @media only screen and (min-width: 960px) {
             body {
+                display: flex;
+            }
+
+            .col {
+                flex: 50%;
                 max-width: 50%;
             }
         }
@@ -65,6 +70,7 @@
         #upload {
             width: 100%;
             padding: 3em auto 3em auto;
+            overflow-x: auto;
         }
 
         #download {
@@ -109,117 +115,171 @@
         #grpoffset div {
             margin-bottom: 0.5em;
         }
+
+        input {
+            field-sizing: content;
+        }
+
+        #preview {
+            padding-left: 2em;
+        }
+
+        col:nth-child(odd) {
+            background: whitesmoke;
+        }
     </style>
 </head>
 
 <body>
-    <h1>compile</h1>
-    <div id="dragdrop">
-        Drag and drop pdf, jpg, png here
-    </div>
-    <div id="upload">
-        <input type="file" id="input" multiple accept=".pdf,.jpg,.png" />
-        <pre id="filesoutput"></pre>
-        <table class="monospace">
-            <thead>
-                <th>Order</th>
-                <th>File</th>
-                <th>Bookmark</th>
-                <th>Offset, horiz.</th>
-                <th>Offset, verti.</th>
-            </thead>
-            <tbody id="filelist"></tbody>
-        </table>
-    </div>
-    <div class="settings">
-        <button id="gen" disabled>compile</button>
-        <button id="clear" disabled>clear</button>
-        <button id="sortasc" title="sort before editing settings">sort asc</button>
-        <div class="grpsettings">
-            <strong><label for="paginate">Paginate?</label></strong>
-            <input type="checkbox" id="paginate" name="paginate" checked />
+    <div class="col">
+        <h1>compile</h1>
+        <div id="dragdrop">
+            Drag and drop pdf, jpg, png here
+        </div>
+        <div id="upload">
+            <input type="file" id="input" multiple accept=".pdf,.jpg,.png" />
+            <pre id="filesoutput"></pre>
+            <table class="monospace">
+                <colgroup>
+                    <col>
+                    <col>
+                    <col>
+                    <col>
+                    <col>
+                    <col>
+                    <col>
+                    <col>
+                    <col>
+                </colgroup>
+                <thead>
+                    <th>Order</th>
+                    <th style="width:25%">File</th>
+                    <th>Pg?</th>
+                    <th>Tabs?</th>
+                    <th>Bkmark?</th>
+                    <th>B prefix</th>
+                    <th>B name</th>
+                    <th>Offset, h.</th>
+                    <th>v.</th>
+                </thead>
+                <tbody id="filelist"></tbody>
+            </table>
+        </div>
+        <div class="settings">
+            <button id="gen" disabled>compile</button>
+            <button id="clear" disabled>clear</button>
+            <button id="extract" disabled>extract</button>
+            <button id="sortasc" title="sort before editing settings">sort asc</button>
 
-            <label for="pageno">Starting page number: </label>
-            <input type="number" id="pageno" value="1" />
-            <!-- <p id="maxpages"></p> -->
+            <div class="grpsettings">
+                <strong><label for="createbkmark">Extract pages</label></strong>
+                <span>from first file only</span>
 
-            <label for="pageprefix">Prefix: </label>
-            <section>
-                <input type="text" id="pageprefix" name="pageprefix" value="" />
-                <a href="javascript:void(0);" id="pgpreset1">Page&nbsp;</a>
-            </section>
+                <label for="firstpg">Start page: </label>
+                <input type="number" id="firstpg" name="firstpg" value="1" min="0" />
 
-            <label for="skipfirst">These page number(s) will not be visible: <br /> (delimit using comma)</label>
-            <input type="text" id="skipfirst" name="skipfirst" value="1" />
+                <label for="lastpg">End page (inclusive): </label>
+                <input type="number" id="lastpg" name="lastpg" value="1" min="0" />
+            </div>
 
-            <label for="pagefontsize">Font size: </label>
-            <input type="number" id="pagefontsize" name="pagefontsize" value="20" min="0" />
+            <div class="grpsettings">
+                <strong><label for="paginate">Paginate?</label></strong>
+                <input type="checkbox" id="paginate" name="paginate" checked />
 
-            <label for="pagemargin">Margin (cm), top/bottom: </label>
-            <input type="number" id="pagemargin" name="pagemargin" value="1.27" />
+                <label for="pageno">Starting page number: </label>
+                <input type="number" id="pageno" value="1" />
+                <!-- <p id="maxpages"></p> -->
 
-            <label for="marginright">Margin (cm), left/right: </label>
-            <input type="number" id="marginright" name="marginright" value="2.54" />
+                <label for="pageprefix">Prefix: </label>
+                <section>
+                    <input type="text" id="pageprefix" name="pageprefix" value="" />
+                    <a href="javascript:void(0);" id="pgpreset1">Page&nbsp;</a>
+                </section>
 
-            <legend>Position: </legend>
-            <section>
-                <div>
-                    <input type="radio" id="topcenter" name="pageposition" value="topcenter" checked />
-                    <label for="topcenter">Top-center</label>
+                <legend>Position: </legend>
+                <section>
+                    <div>
+                        <input type="radio" id="topcenter" name="pageposition" value="topcenter" checked />
+                        <label for="topcenter">Top-center</label>
 
-                    <input type="radio" id="topright" name="pageposition" value="topright" />
-                    <label for="topright">Top-right</label>
-                </div>
-            </section>
+                        <input type="radio" id="topright" name="pageposition" value="topright" />
+                        <label for="topright">Top-right</label>
+                    </div>
+                </section>
 
-            <p>Specific page offsets: <a href="javascript:void(0);" id="addpageoffset">add</a> <br /> + right, top; - left, bottom</p>
-            <section id="grpoffset">
-                <!-- <div>
+                <label for="pagefontsize">Font size: </label>
+                <input type="number" id="pagefontsize" name="pagefontsize" value="20" min="0" />
+
+                <label for="pagemargin">Margin (cm), from top:</label>
+                <section>
+                    <input type="number" id="pagemargin" name="pagemargin" value="1" />
+                </section>
+
+                <label for="marginright">Margin (cm), from right: </label>
+                <section>
+                    <input type="number" id="marginright" name="marginright" value="2.54" />
+                    <input type="range" style="direction: rtl;" min="0" value="2.54" step="0.01" max="50"
+                        id="rightrange" />
+                </section>
+
+                <label for="skipfirst">These page number(s) will not be visible: <br /> (delimit using comma)</label>
+                <input type="text" id="skipfirst" name="skipfirst" value="0" />
+
+                <p>Specific page offsets (cm): <a href="javascript:void(0);" id="addpageoffset">add</a> <br /> + (pos)
+                    right,
+                    top<br />
+                    - (neg) left, bottom</p>
+                <section id="grpoffset">
+                    <!-- <div>
                     <input type="number" class="pageoffsets" placeholder="page number" min="0"/>
                     <input type="number" class="pageoffsetx" placeholder="offset, horiz."/>
                     <input type="number" class="pageoffsety" placeholder="offset, verti."/>
                     <a href="#" class="removepageoffset">x</a>
                 </div> -->
 
-            </section>
-        </div>
+                </section>
+            </div>
 
-        <div class="grpsettings">
-            <strong><label for="createtabs">Create tabs? </label></strong>
-            <input type="checkbox" id="createtabs" name="createtabs" checked />
+            <div class="grpsettings">
+                <strong><label for="createtabs">Create tabs? </label></strong>
+                <input type="checkbox" id="createtabs" name="createtabs" checked />
 
-            <label for="tabprefix">Tab prefix: </label>
-            <section>
-                <input type="text" id="tabprefix" name="tabprefix" value="TAB-" />
-                <div>
-                    <a href="javascript:void(0);" class="tabpreset">TAB&nbsp;</a>
-                    <a href="javascript:void(0);" class="tabpreset">TAB-</a>
-                </div>
+                <strong><label for="globalbk">Create bookmarks? </label></strong>
+                <input type="checkbox" id="globalbk" name="globalbk" checked />
 
-            </section>
+                <label for="tabprefix">Tab (& bookmark) prefix: </label>
+                <section>
+                    <input type="text" id="tabprefix" name="tabprefix" value="TAB-" />
+                    <div>
+                        <a href="javascript:void(0);" class="tabpreset">TAB&nbsp;</a>
+                        <a href="javascript:void(0);" class="tabpreset">TAB-</a>
+                    </div>
 
-            <label for="tabcount">Starting tab count: </label>
-            <section>
-                <input type="number" id="tabcount" value="1" />
-                <div>
-                    <input type="checkbox" id="tabalpha" name="tabalpha" />
-                    <label for="tabalpha">Alphabetical</label>
-                </div>
-            </section>
+                </section>
 
-            <label for="skiptabs">Start tabs on file number: </label>
-            <input type="number" id="skiptabs" value="1" />
+                <label for="tabcount">Starting tab count: </label>
+                <section>
+                    <input type="number" id="tabcount" value="1" />
+                    <div>
+                        <input type="checkbox" id="tabalpha" name="tabalpha" />
+                        <label for="tabalpha">Alphabetical</label>
+                    </div>
+                </section>
 
-            <label for="tabfontsize">Font size: </label>
-            <section>
-                <input type="number" id="tabfontsize" name="tabfontsize" value="50" min="0" />
-                <div>
-                    <input type="checkbox" id="tabbold" name="tabbold" checked />
-                    <label for="tabbold">Bold</label>
-                </div>
-            </section>
+                <!-- <label for="skiptabs">Start tabs on file number: </label>
+                <input type="number" id="skiptabs" value="1" /> -->
 
-            <!-- page size -->
+                <label for="tabfontsize">Font size: </label>
+                <section>
+                    <input type="number" id="tabfontsize" name="tabfontsize" value="50" min="0" />
+                    <div>
+                        <input type="checkbox" id="tabbold" name="tabbold" checked />
+                        <label for="tabbold">Bold</label>
+                    </div>
+                </section>
+
+                <!-- page size -->
+            </div>
         </div>
     </div>
     <div id="preview">
@@ -273,33 +333,49 @@
         addFiles(fileList);
     }
 
+    const rightrange = document.getElementById('rightrange');
+    const marginright = document.getElementById('marginright');
+    rightrange.addEventListener("input", (event) => {
+        marginright.value = event.target.value;
+    })
+    marginright.addEventListener("input", (event) => {
+        rightrange.value = event.target.value;
+    })
+
     const gen = document.getElementById('gen')
     const clear = document.getElementById('clear')
+    const extract = document.getElementById('extract')
 
     // function - add files
     function insertRowFileTable(order, name) {
         let row = filelist.insertRow();
+
         var cell = row.insertCell();
-        cell.textContent = `${order}.`;
+        cell.textContent = `${order}`;
+
         cell = row.insertCell();
         cell.textContent = `${name}`;
+
         cell = row.insertCell();
-        var input = document.createElement("input");
-        input.setAttribute("type", "text");
-        input.classList.add("outline")
-        cell.appendChild(input);
+        cell.innerHTML = '<input type="checkbox" checked class="createpg" />';
+
         cell = row.insertCell();
-        var input = document.createElement("input");
-        input.setAttribute("type", "number");
-        input.classList.add("offsetx")
-        input.value = 0;
-        cell.appendChild(input);
+        cell.innerHTML = '<input type="checkbox" checked class="createtab" />';
+
         cell = row.insertCell();
-        var input = document.createElement("input");
-        input.setAttribute("type", "number");
-        input.classList.add("offsety")
-        input.value = 0;
-        cell.appendChild(input);
+        cell.innerHTML = '<input type="checkbox" class="createb" checked />';
+
+        cell = row.insertCell();
+        cell.innerHTML = '<input type="checkbox" class="bprefix" checked/>';
+
+        cell = row.insertCell();
+        cell.innerHTML = "<input type='text' placeholder='Text' class='outline' />";
+
+        cell = row.insertCell();
+        cell.innerHTML = '<input class="offsetx" type="number" value=0 />';
+
+        cell = row.insertCell();
+        cell.innerHTML = '<input class="offsety" type="number" value=0 />';
     }
 
     function addFiles(fileList) {
@@ -321,6 +397,7 @@
         if (files.length > 0) {
             gen.removeAttribute('disabled');
             clear.removeAttribute('disabled');
+            extract.removeAttribute('disabled');
         }
     }
 
@@ -329,6 +406,7 @@
         files = [];
         filelist.innerHTML = ''
         gen.setAttribute('disabled', "");
+        clear.setAttribute('disabled', "");
         clear.setAttribute('disabled', "");
     }
 
@@ -340,6 +418,61 @@
         for (let i = 0; i < files.length; i++) {
             insertRowFileTable(i + 1, files[i].name)
         }
+    }
+
+    extract.addEventListener("click", extractfiles, false)
+    async function extractfiles() {
+        const firstpg = Number(document.getElementById("firstpg").value);
+        const lastpg = Number(document.getElementById("lastpg").value);
+
+        if (lastpg < firstpg) {
+            return;
+        }
+
+        // create details-summary
+        const div = document.createElement("details");
+        let d = new Date();
+        div.id = parseInt(d.getTime() / 1000)
+        div.setAttribute('open', '')
+        preview.prepend(div)
+
+        const p = document.createElement("summary")
+        p.innerText = d.toString();
+        div.appendChild(p)
+        const ul = document.createElement("ul")
+        div.appendChild(ul)
+
+        const li = document.createElement("li")
+        li.classList.add("obj")
+        ul.appendChild(li)
+
+        const PDFDocument = PDFLib.PDFDocument;
+        const pdfdoc = await PDFDocument.create();
+
+        // get bytes and load current file
+        let pdfbytes = await files[0].arrayBuffer();
+
+        let pdfsrc = await PDFDocument.load(pdfbytes, { ignoreEncryption: true });
+        if (pdfsrc.isEncrypted) {
+            return;
+        }
+        let pagecount = pdfsrc.getPageCount();
+        if (lastpg > pagecount) {
+            return;
+        }
+
+        for (var j = firstpg - 1; j < lastpg; j++) {
+            let [ogpage] = await pdfdoc.copyPages(pdfsrc, [j])
+
+            // copy page
+            var newpage = pdfdoc.addPage(ogpage);
+        }
+
+        const outpdfBytes = await pdfdoc.save()
+        const outBlob = new Blob([outpdfBytes], { type: 'application/pdf' })
+        outBlob.name = `compile-${div.id}.pdf`;
+        const newLink = URL.createObjectURL(outBlob);
+        li.innerHTML = `<a href="${newLink}" target="_blank" class="pdfdl">${outBlob.name}</a> (${formatBytes(outBlob.size)}) <a href="${newLink}" download="${outBlob.name}" target="_blank" class="pdfdl">download</a>`
     }
 
     // compile button - add handler compile
@@ -384,9 +517,10 @@
 
         // get settings
         const paginate = document.getElementById("paginate").checked;
+        const pgArray = [...document.getElementsByClassName("createpg")].map((x) => x.checked)
         var pageno = parseInt(document.getElementById("pageno").value);
-        const skipfirsttext = document.getElementById("skipfirst").value;
-        const skipArray = skipfirsttext.split(",").map(Number).filter(n => !isNaN(n));
+        const skippages = document.getElementById("skipfirst").value;
+        const skipArray = skippages.split(",").map(Number).filter(n => !isNaN(n));
         const pagefontsize = Number(document.getElementById("pagefontsize").value);
         const pagemargin = Number(document.getElementById("pagemargin").value) * 28.346;
         const pageprefix = document.getElementById("pageprefix").value;
@@ -394,8 +528,10 @@
         const pageposition = document.querySelector("input[name='pageposition']:checked").value;
 
         const createtabs = document.getElementById("createtabs").checked;
+        const globalbk = document.getElementById("globalbk").checked;
         const tabprefix = document.getElementById("tabprefix").value;
-        const skiptabs = parseInt(document.getElementById("skiptabs").value);
+        //const skiptabs = parseInt(document.getElementById("skiptabs").value);
+        const tabArray = [...document.getElementsByClassName("createtab")].map((x) => x.checked)
         const tabfontsize = Number(document.getElementById("tabfontsize").value);
         var tabcount = parseInt(document.getElementById("tabcount").value);
         const tabalpha = document.getElementById("tabalpha").checked;
@@ -417,6 +553,8 @@
 
         const startpgs = [];
 
+        var tabsArray = [];
+
         // loop over filelist
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
@@ -435,10 +573,11 @@
 
             // create tab
             if (createtabs) {
-                if (i >= skiptabs - 1) {
+                if (tabArray[i]) {
                     var newpage = pdfdoc.addPage(PDFLib.PageSizes.A4);
 
                     let text = `${tabprefix}${tabalpha ? numberToLetters(tabcount) : tabcount}`;
+                    tabsArray.push(text);
                     let textwidth = tabbold ? fontbold.widthOfTextAtSize(text, tabfontsize) : font.widthOfTextAtSize(text, tabfontsize);
                     let textheight = font.heightAtSize(tabfontsize);
                     let calcwidth = (newpage.getWidth() - textwidth) / 2;
@@ -447,17 +586,20 @@
                     newpage.drawText(text, { x: calcwidth, y: calcheight, size: tabfontsize, font: tabbold ? fontbold : font })
 
                     // paginate
-                    if (paginate) {
+                    if (paginate && pgArray[i]) {
                         paginatef(newpage, skipArray, pageno, pageprefix, pagefontsize, pageposition, pagemargin, marginright, font);
                     }
                     pageno++;
                     tabcount++;
                     startpg++;
                 }
+                else {
+                    tabsArray.push("");
+                }
             }
 
             // get bytes and load current file
-            let pdfbytes = await file.bytes();
+            let pdfbytes = await file.arrayBuffer();
 
             // if pdf
             if (file.type === "application/pdf") {
@@ -474,7 +616,7 @@
                     var newpage = pdfdoc.addPage(ogpage);
 
                     // paginate
-                    if (paginate) {
+                    if (paginate && pgArray[i]) {
                         paginatef(newpage, skipArray, pageno, pageprefix, pagefontsize, pageposition, pagemargin, marginright, font, offsetsX[i], offsetsY[i]);
                     }
                     pageno++;
@@ -493,56 +635,83 @@
                 var scaled = image.scaleToFit(pagewidth, pageheight);
                 newpage.drawImage(image, { x: (pagewidth - scaled.width) / 2, y: (pageheight - scaled.height) / 2, width: scaled.width, height: scaled.height });
                 // paginate
-                if (paginate) {
+                if (paginate && pgArray[i]) {
                     paginatef(newpage, skipArray, pageno, pageprefix, pagefontsize, pageposition, pagemargin, marginright, font, offsetsX[i], offsetsY[i]);
                 }
                 pageno++;
             }
 
-            if (paginate) {
+            if (paginate && pgArray[i]) {
                 cell.textContent = startpg == (pageno - 1) ? `${startpg}` : `${startpg} - ${pageno - 1}`;
             }
         }
 
         // create outlines
-        var outlinearr = [...document.getElementsByClassName("outline")].map((x) => x.value);
+        if (globalbk) {
+            var outlinearr = []
 
-        const pageRefs = getPageRefs(pdfdoc);
-        const rootRef = pdfdoc.context.nextRef();
-        var curRef = null;
-        var nextRef = pdfdoc.context.nextRef();
+            const createbks = [...document.getElementsByClassName("createb")].map((x) => x.checked);
+            const bkprefix = [...document.getElementsByClassName("bprefix")].map((x) => x.checked);
+            var bktitles = [...document.getElementsByClassName("outline")].map((x) => x.value);
 
-        var outlines = [];
-        var outlineRefs = [];
+            for (let n = 0; n < createbks.length; n++) {
+                var text = ``;
 
-        // creating outline items
-        for (let k = 0; k < outlinearr.length; k++) {
-            if (outlinearr[k]) {
-                curRef = nextRef
-                nextRef = pdfdoc.context.nextRef();
-                const outlineitem = createOutlineItem(pdfdoc, outlinearr[k], rootRef, k == outlinearr.length ? curRef : nextRef, pageRefs[startpgs[k]], k == outlinearr.length ? true : false);
+                if (!createbks[n]) {
+                    outlinearr.push(false);
+                    continue;
+                }
 
-                outlines.push(outlineitem)
-                outlineRefs.push(curRef)
+                if (tabArray[n] && bkprefix[n]) {
+                    text = `${tabsArray[n]} - `;
+                }
+
+                if (bktitles[n]) {
+                    text = text.concat(bktitles[n]);
+                } else {
+                    text = text.concat(files[n].name.lastIndexOf(".") === -1 ? files[n].name : files[n].name.slice(0, files[n].name.lastIndexOf(".")));
+                }
+
+                outlinearr.push(text)
             }
-        }
 
-        if (outlines.length > 0) {
-            const outlinesDictMap = new Map();
-            outlinesDictMap.set(PDFLib.PDFName.Type, PDFLib.PDFName.of("Outlines"));
-            outlinesDictMap.set(PDFLib.PDFName.of("First"), outlineRefs[0]);
-            outlinesDictMap.set(PDFLib.PDFName.of("Last"), outlineRefs[outlineRefs.length - 1]);
-            outlinesDictMap.set(PDFLib.PDFName.of("Count"), PDFLib.PDFNumber.of(outlineRefs.length));
+            const pageRefs = getPageRefs(pdfdoc);
+            const rootRef = pdfdoc.context.nextRef();
+            var curRef = null;
+            var nextRef = pdfdoc.context.nextRef();
 
-            //Pointing the "Outlines" property of the PDF's "Catalog" to the first object of your outlines
-            pdfdoc.catalog.set(PDFLib.PDFName.of("Outlines"), rootRef)
-            const outlinesDict = PDFLib.PDFDict.fromMapWithContext(outlinesDictMap, pdfdoc.context);
+            var outlines = [];
+            var outlineRefs = [];
 
-            //First 'Outline' object. Refer to table H.3 in Annex H.6 of PDF Specification doc.
-            pdfdoc.context.assign(rootRef, outlinesDict);
+            // creating outline items
+            for (let k = 0; k < outlinearr.length; k++) {
+                if (outlinearr[k]) {
+                    curRef = nextRef
+                    nextRef = pdfdoc.context.nextRef();
+                    const outlineitem = createOutlineItem(pdfdoc, outlinearr[k], rootRef, k == outlinearr.length ? curRef : nextRef, pageRefs[startpgs[k]], k == outlinearr.length ? true : false);
 
-            for (let l = 0; l < outlines.length; l++) {
-                pdfdoc.context.assign(outlineRefs[l], outlines[l]);
+                    outlines.push(outlineitem)
+                    outlineRefs.push(curRef)
+                }
+            }
+
+            if (outlines.length > 0) {
+                const outlinesDictMap = new Map();
+                outlinesDictMap.set(PDFLib.PDFName.Type, PDFLib.PDFName.of("Outlines"));
+                outlinesDictMap.set(PDFLib.PDFName.of("First"), outlineRefs[0]);
+                outlinesDictMap.set(PDFLib.PDFName.of("Last"), outlineRefs[outlineRefs.length - 1]);
+                outlinesDictMap.set(PDFLib.PDFName.of("Count"), PDFLib.PDFNumber.of(outlineRefs.length));
+
+                //Pointing the "Outlines" property of the PDF's "Catalog" to the first object of your outlines
+                pdfdoc.catalog.set(PDFLib.PDFName.of("Outlines"), rootRef)
+                const outlinesDict = PDFLib.PDFDict.fromMapWithContext(outlinesDictMap, pdfdoc.context);
+
+                //First 'Outline' object. Refer to table H.3 in Annex H.6 of PDF Specification doc.
+                pdfdoc.context.assign(rootRef, outlinesDict);
+
+                for (let l = 0; l < outlines.length; l++) {
+                    pdfdoc.context.assign(outlineRefs[l], outlines[l]);
+                }
             }
         }
 
@@ -550,7 +719,7 @@
         const outBlob = new Blob([outpdfBytes], { type: 'application/pdf' })
         outBlob.name = `compile-${div.id}.pdf`;
         const newLink = URL.createObjectURL(outBlob);
-        li.innerHTML = `<a href="${newLink}" download="${outBlob.name}" target="_blank" class="pdfdl">${outBlob.name}</a> (${formatBytes(outBlob.size)})`
+        li.innerHTML = `<a href="${newLink}" target="_blank" class="pdfdl">${outBlob.name}</a> (${formatBytes(outBlob.size)}) <a href="${newLink}" download="${outBlob.name}" target="_blank" class="pdfdl">download</a>`
 
         //files = [];
         //gen.setAttribute('disabled', "");
@@ -581,8 +750,9 @@
         if (!skipArray.includes(pageno)) {
             let text = `${pageprefix}${pageno}`
             let textwidth = font.widthOfTextAtSize(text, pagefontsize);
-            let pagewidth = newpage.getWidth();
-            let pageheight = newpage.getHeight();
+            let pagewidth = newpage.getCropBox().width;
+            let pageheight = newpage.getCropBox().height;
+
             let xcalc = ((pagewidth - textwidth) / 2);
             if (pageposition === "topright") {
                 xcalc = pagewidth - marginright - textwidth;
@@ -594,7 +764,7 @@
                 offsetY = pageoffsetsY[index]
             }
 
-            newpage.drawText(text, { x: xcalc + offsetX, y: pageheight - pagemargin + offsetY, size: pagefontsize, font: font })
+            newpage.drawText(text, { x: xcalc + offsetX + newpage.getCropBox().x, y: pageheight - pagemargin + offsetY + newpage.getCropBox().y, size: pagefontsize, font: font })
         }
     }
 
