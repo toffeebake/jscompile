@@ -608,6 +608,8 @@
                     continue;
                 }
                 let pagecount = pdfsrc.getPageCount();
+                
+                // let copiedPages = await pdfdoc.copyPages(pdfsrc, pdfsrc.getPageIndices())
 
                 for (var j = 0; j < pagecount; j++) {
                     let [ogpage] = await pdfdoc.copyPages(pdfsrc, [j])
