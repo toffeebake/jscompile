@@ -369,7 +369,7 @@
         cell.innerHTML = '<input type="checkbox" class="bprefix" checked/>';
 
         cell = row.insertCell();
-        cell.innerHTML = "<input type='text' placeholder='Text' class='outline' />";
+        cell.innerHTML = `<input type='text' placeholder='Text' class='outline' value='${name.lastIndexOf(".") === -1 ? name : name.slice(0, name.lastIndexOf("."))}'/>`;
 
         cell = row.insertCell();
         cell.innerHTML = '<input class="offsetx" type="number" value=0 />';
@@ -548,7 +548,7 @@
         const PDFDocument = PDFLib.PDFDocument;
         const pagesizes = PDFLib.PageSizes;
         const pdfdoc = await PDFDocument.create();
-        const font = await pdfdoc.embedFont(PDFLib.StandardFonts.Helvetica);
+        const font = await pdfdoc.embedFont(PDFLib.StandardFonts.Helvetica, {subset: true});
         const fontbold = tabbold ? await pdfdoc.embedFont(PDFLib.StandardFonts.HelveticaBold) : null;
 
         const startpgs = [];
@@ -608,12 +608,10 @@
                     continue;
                 }
                 let pagecount = pdfsrc.getPageCount();
-                
-                // let copiedPages = await pdfdoc.copyPages(pdfsrc, pdfsrc.getPageIndices())
 
-                for (var j = 0; j < pagecount; j++) {
-                    let [ogpage] = await pdfdoc.copyPages(pdfsrc, [j])
+                let copiedPages = await pdfdoc.copyPages(pdfsrc, pdfsrc.getPageIndices())
 
+                copiedPages.forEach((ogpage) => {
                     // copy page
                     var newpage = pdfdoc.addPage(ogpage);
 
@@ -622,7 +620,20 @@
                         paginatef(newpage, skipArray, pageno, pageprefix, pagefontsize, pageposition, pagemargin, marginright, font, offsetsX[i], offsetsY[i]);
                     }
                     pageno++;
-                }
+                })
+
+                // for (var j = 0; j < pagecount; j++) {
+                //     let [ogpage] = await pdfdoc.copyPages(pdfsrc, [j])
+
+                //     // copy page
+                //     var newpage = pdfdoc.addPage(ogpage);
+
+                //     // paginate
+                //     if (paginate && pgArray[i]) {
+                //         paginatef(newpage, skipArray, pageno, pageprefix, pagefontsize, pageposition, pagemargin, marginright, font, offsetsX[i], offsetsY[i]);
+                //     }
+                //     pageno++;
+                // }
             } else {
                 var image;
                 if (file.type === "image/jpeg") {
@@ -670,8 +681,6 @@
 
                 if (bktitles[n]) {
                     text = text.concat(bktitles[n]);
-                } else {
-                    text = text.concat(files[n].name.lastIndexOf(".") === -1 ? files[n].name : files[n].name.slice(0, files[n].name.lastIndexOf(".")));
                 }
 
                 outlinearr.push(text)
